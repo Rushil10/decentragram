@@ -45,12 +45,12 @@ contract Decentragram {
   function tipImageOwner(uint _id) public payable {
     require(_id > 0 && _id <= imageCount);
     Image memory _image = images[_id];
-    address payable _author = _image.author
+    address payable _author = _image.author;
     address(_author).transfer(msg.value);
     //msg.value is the amount of crpyto sent in when function is called
     _image.tipAmount=_image.tipAmount+msg.value;
     //Update the image
     images[_id]=_image;
-    emit ImageTipped(_id,_image.hash,_image.description,_image.tipAmount,_author)
+    emit ImageTipped(_id,_image.hash,_image.description,_image.tipAmount,_author);
   }
 }
