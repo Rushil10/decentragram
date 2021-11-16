@@ -42,12 +42,16 @@ class App extends Component {
       this.setState({
         imagesCount
       })
-      for (var i = 0; i < imagesCount.length; i++) {
+      for (var i = 1; i <= imagesCount; i++) {
         const image = await decentragram.methods.images(i).call()
+        console.log(image)
         this.setState({
           images: [...this.state.images, image]
         })
       }
+      this.setState({
+        images: this.state.images.sort((a, b) => b.tipAmount - a.tipAmount)
+      })
       console.log(imagesCount)
       this.setState({
         loading: false
@@ -72,6 +76,17 @@ class App extends Component {
         this.setState({
           loading: false
         })
+      })
+    })
+  }
+
+  tipImageOwner = (id, tipAmount) => {
+    this.setState({
+      loading: true,
+    })
+    this.state.decentragram.methods.tipImageOwner(id).send({ from: this.state.account, value: tipAmount }).on('transactionHash', (hash) => {
+      this.setState({
+        loading: false
       })
     })
   }
@@ -119,6 +134,7 @@ class App extends Component {
             images={this.state.images}
             captureFile={this.captureFile}
             uploadImage={this.uploadImage}
+            tipImageOwner={this.tipImageOwner}
           // Code...
           />
         )}
