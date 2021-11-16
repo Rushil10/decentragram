@@ -6,6 +6,9 @@ import Decentragram from "../abis/Decentragram.json";
 import Navbar from "./Navbar";
 import Main from "./Main";
 
+const ipfsClient = require('ipfs-http-client')
+const ipfs = ipfsClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
+
 class App extends Component {
   async loadWeb3() {
     if (window.etheruem) {
@@ -35,16 +38,54 @@ class App extends Component {
       this.setState({
         decentragram
       })
-      this.setState({
-        loading: false
-      })
       const imagesCount = await decentragram.methods.imageCount().call()
       this.setState({
         imagesCount
       })
+      for (var i = 0; i < imagesCount.length; i++) {
+        const image = await decentragram.methods.images(i).call()
+        this.setState({
+          images: [...this.state.images, image]
+        })
+      }
       console.log(imagesCount)
+      this.setState({
+        loading: false
+      })
     } else {
       window.alert("Contract not deployed to this network")
+    }
+  }
+
+  uploadImage = description => {
+    console.log("Submitting file to ipfs");
+    ipfs.add(this.state.buffer, (error, result) => {
+      console.log('ipfs result', result)
+      if (error) {
+        console.log(error)
+        return
+      }
+      this.setState({
+        loading: true
+      })
+      this.state.decentragram.methods.uploadImage(result[0].hash, description).send({ from: this.state.account }).on('transactionHash', (hash) => {
+        this.setState({
+          loading: false
+        })
+      })
+    })
+  }
+
+  captureFile = event => {
+    event.preventDefault()
+    const file = event.target.files[0]
+    const reader = new window.FileReader()
+    reader.readAsArrayBuffer(file)
+    reader.onloadend = () => {
+      this.setState({
+        buffer: Buffer(reader.result)
+      })
+      console.log('buffer', this.state.buffer)
     }
   }
 
@@ -55,7 +96,8 @@ class App extends Component {
       decentragram: null,
       images: [],
       loading: true,
-      imagesCount: 0
+      imagesCount: 0,
+      buffer: null
     };
   }
 
@@ -74,6 +116,9 @@ class App extends Component {
           </div>
         ) : (
           <Main
+            images={this.state.images}
+            captureFile={this.captureFile}
+            uploadImage={this.uploadImage}
           // Code...
           />
         )}
